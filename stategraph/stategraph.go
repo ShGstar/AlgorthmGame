@@ -54,3 +54,19 @@ type StateBase struct {
 	fsm   *FSM
 	value string
 }
+
+func (b *StateBase) Start() {
+
+}
+
+func (b *StateBase) Stop() {
+
+}
+
+func (b *StateBase) Update() {
+
+}
+
+func (b *StateBase) Value() string {
+	return b.value
+}
