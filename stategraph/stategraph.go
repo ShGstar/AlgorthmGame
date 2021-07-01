@@ -56,15 +56,15 @@ type StateBase struct {
 }
 
 func (b *StateBase) Start() {
-
+	fmt.Println("-----> StateBase Start() <----------")
 }
 
 func (b *StateBase) Stop() {
-
+	fmt.Println("-----> StateBase Stop() <----------")
 }
 
 func (b *StateBase) Update() {
-
+	fmt.Println("-----> StateBase Update() <----------")
 }
 
 func (b *StateBase) Value() string {
