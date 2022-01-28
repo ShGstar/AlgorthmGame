@@ -21,6 +21,12 @@ type Server struct {
 	services map[string]*ServiceInfo // service name -> service info
 }
 
+func NewServer() *Server {
+	return &Server{
+		services: make(map[string]*ServiceInfo),
+	}
+}
+
 func (s *Server) RegisterService(sd *grpc.ServiceDesc, ss interface{}) {
 	//if ss != nil {
 	//ht := reflect.TypeOf(sd.HandlerType).Elem()

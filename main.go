@@ -1,13 +1,22 @@
 package main
 
-const (
-	STATE_NO_1 = "STATE1"
-	STATE_NO_2 = "STATE2"
-	STATE_NO_3 = "STATE3"
-	STATE_NO_4 = "STATE4"
-	STATE_NO_5 = "STATE5"
+import (
+	ser "./grpc/mrpc"
+	"time"
 )
 
+//mrpc测试
 func main() {
+	ser.InitRedis()
 
+	server := ser.NewServer()
+
+	//
+	ser.InitSubManager(server)
+
+	ser.Subscribe("c1")
+
+	ser.Publish("c1", "testwfw")
+
+	time.Sleep(1 * time.Minute)
 }
