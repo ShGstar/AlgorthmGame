@@ -1,9 +1,12 @@
 package mrpc
 
 import (
+	protos "../protos"
 	"context"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
+	"github.com/golang/protobuf/proto"
+	"log"
 	"time"
 )
 
@@ -69,15 +72,16 @@ func Subscribe(channel string) (context.CancelFunc, error) {
 		}()
 
 		for {
-			minticker := time.After(5 * time.Second)
+			minticker := time.After(1 * time.Second) //如果订阅失败反复订阅
 
 			psc := redis.PubSubConn{Conn: redisClient.Get()}
 			if err := psc.Subscribe(channel); err != nil { //订阅此频道
 				select {
 				case <-minticker:
+					log.Println("psc.Subscribe failed,again")
 				}
 				continue
-				fmt.Errorf("error")
+				//fmt.Errorf("error")
 			}
 
 			// Start a goroutine to receive notifications from the server.
@@ -90,10 +94,13 @@ func Subscribe(channel string) (context.CancelFunc, error) {
 						done <- n
 						return
 					case redis.Message:
-						if _, err := SubManagerInstance.Callback.HandleMessage(n.Channel, n.Data); err != nil {
-							done <- err
-							return
+						if rsp, err := SubManagerInstance.Callback.HandleMessage(n.Channel, n.Data); err == nil {
+							fmt.Println("rsp = ", string(rsp))
+							continue
+							//done <- err
+							//return
 						}
+						return
 					case redis.Subscription:
 						if n.Count == 0 {
 							// all channels are unsubscribed
@@ -131,14 +138,31 @@ func Subscribe(channel string) (context.CancelFunc, error) {
 	return cancel, nil
 }
 
+//协议打包
+func PackageMessage(protoId string, message []byte) []byte {
+	notify := &protos.MessageNotify{
+		Proto: protoId,
+		Data:  message,
+	}
+
+	bytes, err := proto.Marshal(notify)
+	if err != nil {
+		panic(err)
+	}
+
+	return bytes
+}
+
 //发布
-func Publish(channel, message string) (int, error) {
+func Publish(protoId, channel string, message []byte) (int, error) {
 	conn := redisClient.Get()
 	defer conn.Close()
 
-	n, err := redis.Int(conn.Do("PUBLISH", channel, message))
+	packageMessage := PackageMessage("proto.HelloService/HelloTest", message)
+
+	n, err := redis.Int(conn.Do("PUBLISH", protoId, packageMessage))
 	if err != nil {
-		return 0, fmt.Errorf("redis publish %s %s, err: %v", channel, message, err)
+		return 0, fmt.Errorf("redis publish %s %s, err: %v", protoId, message, err)
 	}
 
 	return n, nil

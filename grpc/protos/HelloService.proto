@@ -7,6 +7,11 @@ message String{
     string value = 1;
 }
 
+message MessageNotify{
+    string proto = 1;   //协议名字
+    bytes  data = 2;
+}
+
 service HelloService{
     rpc HelloTest (String) returns (String);
 }

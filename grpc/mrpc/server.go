@@ -1,9 +1,11 @@
 package mrpc
 
 import (
+	protos "../protos"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
+	"log"
 	"strings"
 )
 
@@ -60,7 +62,16 @@ func (s *Server) register(sd *grpc.ServiceDesc, ss interface{}) {
 	s.services[sd.ServiceName] = info
 }
 
-func (s *Server) HandleMessage(head string, data []byte) ([]byte, error) {
+func (s *Server) HandleMessage(channel string, data []byte) ([]byte, error) {
+	fmt.Println("recv message channel :", channel)
+	message := &protos.MessageNotify{}
+	err := proto.Unmarshal(data, message)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	head := message.Proto
+
 	if head != "" && head[0] == '/' {
 		head = head[1:]
 	}
@@ -76,7 +87,7 @@ func (s *Server) HandleMessage(head string, data []byte) ([]byte, error) {
 	srv, knownService := s.services[service]
 	if knownService {
 		if md, ok := srv.methods[method]; ok {
-			return s.processRPC(srv, md, data)
+			return s.processRPC(srv, md, message.Data)
 		}
 	}
 
